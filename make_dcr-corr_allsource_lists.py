@@ -1,8 +1,8 @@
-#All sources for IDL program
-
-#Only r-band
-
+#Makes all-sources lists to be rearranged for IDL program
+#Includes DCR corrections on LBT data
+#Only for r-band
 #Run separately for each chip
+#2 path changes initially required. Then only need to input detector number each time.
 
 import os
 import math
@@ -11,13 +11,16 @@ import operator
 from bisect import bisect_left
 import matplotlib.pyplot as plt
 
+#INPUT DETECTOR NUMBER***
+chip = '3'
+
 
 obs_info = np.loadtxt("r-band_day2_obs_info.txt")
 rot_ang = obs_info[:,4] #rotator angles
 z_ang = obs_info[:,5] #zenith angles
 all_lst = obs_info[:,6]
 
-conv_info = np.loadtxt("r4_deg-per-pixel.txt") #CHANGE
+conv_info = np.loadtxt("r%s_deg-per-pixel.txt" %chip)
 ra_conv = conv_info[:,1]
 dec_conv = conv_info[:,2]
 
@@ -33,8 +36,6 @@ y_diffs = []
 colors = []
 
 offsets = []
-
-rotangs = []
 
 x_rats = []
 
@@ -65,15 +66,12 @@ def takeClosest(myList, myNumber):
 # Make empty lists for each filter/chip combo
 
 
-r1 = []
-r2 = []
-r3 = []
-r4 = []
+all_list = []
 
 
-path = '/home/martine/Documents/Astr_research/Extended_catalogs/'
+path = '/home/martine/Documents/Astr_research/Extended_catalogs/' #***CHANGE PATH to wherever extended catalogs are****
 for datafile in os.listdir(path):
-	if datafile.startswith("bluer") and datafile[8] == '4': #CHANGE.
+	if datafile.startswith("bluer") and datafile[8] == chip:
 		
 		Catalog = open(path+datafile, 'r')
 		for source in Catalog:
@@ -187,17 +185,15 @@ for datafile in os.listdir(path):
 				# offsets.append(math.sqrt(x_diff**2 + y_diff**2))
 				x_diffs.append(x_diff)
 				y_diffs.append(y_diff)
-				colors.append(color)
-				# rotangs.append(rot_ang[row_num]) 
+				colors.append(color) 
 
 
 
 
 				# Now add sources to list if they have a matching SDSS object within 3".
-				# Manually change which list is being added to.
 				
  	 			if Distance < 3:
- 					r4.append([XWIN_IMAGE_prime, YWIN_IMAGE_prime, SDSS_ra, SDSS_dec, SDSS_raErr_degrees, SDSS_decErr_degrees, float(image_number)])
+ 					all_list.append([XWIN_IMAGE_prime, YWIN_IMAGE_prime, SDSS_ra, SDSS_dec, SDSS_raErr_degrees, SDSS_decErr_degrees, float(image_number)])
 
 
 
@@ -222,13 +218,14 @@ plt.show()
 
 
 
-final_list = sorted(r4, key = operator.itemgetter(6)) #Puts the sources in order by image number, lowest to highest.
+final_list = sorted(all_list, key = operator.itemgetter(6)) #Puts the sources in order by image number, lowest to highest.
 
 
 
-#Creating a file for each list and writing the list to it in nice format (change manually for each chip/filter combo.)
+#Creating a file for each list and writing the list to it in nice format
+#***CHANGE PATH to wherever you want the outputs to be***
 
-All_list_for_program = open("/home/martine/Documents/Astr_research/DCR_corrections/All_sources_DCR_corrected/r_filter_4.txt", 'w')
+All_list_for_program = open("/home/martine/Documents/Astr_research/DCR_corrections/All_sources_DCR_corrected/r_filter_%s.txt" %chip, 'w')
 for source in final_list:
 	for aspect in source:
 		All_list_for_program.write(str(aspect) + " ")
